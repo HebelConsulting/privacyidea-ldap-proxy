@@ -4,7 +4,7 @@ import json
 import sys
 import re
 import urllib.request, urllib.parse, urllib.error
-from io import StringIO
+from io import BytesIO
 from functools import partial
 
 from ldaptor.protocols import pureldap
@@ -47,12 +47,15 @@ class TwoFactorAuthenticationProxy(ProxyBase):
         connection to the LDAP backend. This works around the problem that health checks
         may result in leftover sockets.
         """
+        """
         if not self.connected:
             log.info('Client has disconnected already, closing connection to LDAP backend ...')
             proto.transport.loseConnection()
             self.queuedRequests = []
         else:
             ProxyBase._connectedToProxiedServer(self, proto)
+        """
+        ProxyBase._connectedToProxiedServer(self, proto)
 
     def request_validate(self, url, user, realm, password):
         """
@@ -66,17 +69,18 @@ class TwoFactorAuthenticationProxy(ProxyBase):
         :return: A Twisted Deferred which yields a `twisted.web.client.Response` instance or fails.
         """
         body = urllib.parse.urlencode({'user': user,
-                                'realm': realm,
-                                'pass': password})
+                                       'realm': realm,
+                                       'pass': password})
         # TODO: Is this really the preferred way to pass a string body?
-        producer = FileBodyProducer(StringIO(body))
-        d = self.factory.agent.request('POST',
-                           url,
-                           Headers({
-                               'Content-Type': ['application/x-www-form-urlencoded'],
-                               'User-Agent': ['privacyIDEA-LDAP-Proxy']
-                           }),
-                           producer)
+        body1 = body.encode("UTF-8")
+        producer = FileBodyProducer(BytesIO(body1))
+        d = self.factory.agent.request('POST'.encode(encoding="ascii"),
+                                       url.encode(encoding="ascii"),
+                                       Headers({
+                                           'Content-Type'.encode(encoding="ascii"): ['application/x-www-form-urlencoded'.encode(encoding="ascii")],
+                                           'User-Agent'.encode(encoding="ascii"): ['privacyIDEA-LDAP-Proxy'.encode(encoding="ascii")]
+                                       }),
+                                       producer)
         return d
 
     @defer.inlineCallbacks

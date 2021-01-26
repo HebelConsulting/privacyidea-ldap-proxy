@@ -10,7 +10,6 @@ incremental==17.5.0
 ldaptor==20.1.1
 passlib==1.7.4
 pathlib==1.0.1
-pi-ldapproxy==0.6
 pip==20.3.3
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
